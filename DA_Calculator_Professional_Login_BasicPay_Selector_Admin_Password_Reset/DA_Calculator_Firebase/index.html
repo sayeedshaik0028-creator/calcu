@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>D.A. Arrears Statement</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --text:#1a2230; --muted:#6b7686;
+    --border:#e2e6ec; --accent:#2563eb; --accent-text:#ffffff;
+    --head:#1e293b; --head-text:#f1f5f9; --danger:#dc2626; --total:#eef2ff;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1420; --card:#171e2c; --text:#e6e9ef; --muted:#93a0b4;
+      --border:#2a3444; --accent:#3b82f6; --accent-text:#ffffff;
+      --head:#0b1220; --head-text:#e6e9ef; --danger:#f87171; --total:#1c2740;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1420; --card:#171e2c; --text:#e6e9ef; --muted:#93a0b4;
+    --border:#2a3444; --accent:#3b82f6; --accent-text:#ffffff;
+    --head:#0b1220; --head-text:#e6e9ef; --danger:#f87171; --total:#1c2740;
+  }
+  html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+  body{height:100%; margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    font-size:14px; padding:14px;}
+  h1{font-size:17px; margin:0 0 12px; line-height:1.3;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:14px; margin-bottom:12px;}
+  .meta-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .rates-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:10px;}
+  label{display:block; font-size:11px; color:var(--muted); margin-bottom:3px;}
+  input,select{width:100%; box-sizing:border-box; background:transparent; color:var(--text);
+    border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:13px;}
+  input:focus,select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .table-wrap{overflow-x:auto; overflow-y:auto; max-height:50vh; border:1px solid var(--border);
+    border-radius:10px; -webkit-overflow-scrolling:touch;}
+  table{border-collapse:collapse; width:100%; min-width:820px; table-layout:fixed;}
+  colgroup col:nth-child(1){width:14%;} colgroup col:nth-child(2){width:10%;}
+  colgroup col:nth-child(3){width:10%;} colgroup col:nth-child(4){width:10%;}
+  colgroup col:nth-child(5){width:10%;} colgroup col:nth-child(6){width:8%;}
+  colgroup col:nth-child(7){width:11%;} colgroup col:nth-child(8){width:10%;}
+  colgroup col:nth-child(9){width:11%;} colgroup col:nth-child(10){width:6%;}
+  th,td{padding:7px 8px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--border);
+    overflow:hidden; text-overflow:ellipsis;}
+  th:first-child,td:first-child{text-align:left;}
+  thead th{position:sticky; top:0; background:var(--head); color:var(--head-text); z-index:3; font-size:11.5px;}
+  th.grp{background:var(--accent); font-size:10.5px; text-align:center;}
+  tbody td input{width:100%; text-align:right; padding:5px 6px; font-size:12.5px;}
+  tbody td:first-child input{text-align:left;}
+  .calc{color:var(--muted); font-variant-numeric:tabular-nums;}
+  .rowbtn{background:none; border:none; color:var(--danger); font-size:16px; cursor:pointer; padding:2px 6px;}
+  tfoot td{position:sticky; bottom:0; background:var(--total); font-weight:700; border-top:2px solid var(--border); z-index:2;}
+  .actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  button.primary{background:var(--accent); color:var(--accent-text); border:none; border-radius:8px;
+    padding:9px 14px; font-size:13px; font-weight:600; cursor:pointer;}
+  button.ghost{background:transparent; color:var(--text); border:1px solid var(--border); border-radius:8px;
+    padding:9px 14px; font-size:13px; cursor:pointer;}
+  .hint{font-size:11px; color:var(--muted); margin-top:8px;}
+  .summary-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+  /* Cps Amt hidden from view (still calculated) */
+  .stat:has(#sumCpsAmt){display:none;}
+  table th:nth-child(8), table td:nth-child(8), colgroup col:nth-child(8){display:none;}
+  .stat{background:var(--total); border-radius:9px; padding:10px 8px; text-align:center;}
+  .stat label{color:var(--muted); font-size:10.5px; margin-bottom:4px;}
+  .stat-val{font-size:16px; font-weight:700; font-variant-numeric:tabular-nums;}
+  .range-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .period{border:1px solid var(--border); border-radius:9px; padding:10px; margin-bottom:10px;}
+  .phead{display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:600; margin-bottom:8px;}
+  .rmsg{font-size:11px; color:var(--muted); margin-top:8px;}
+  .picker{display:none; gap:10px; align-items:end; margin-top:12px; padding:12px; background:var(--bg);
+    border:1px solid var(--border); border-radius:9px; flex-wrap:wrap;}
+  .picker.open{display:flex;}
+  .picker .field{flex:1; min-width:110px;}
+
+  #appContent{display:none} body.authenticated #appContent{display:block}
+  #authGate{max-width:410px;margin:7vh auto;background:var(--card);border:1px solid var(--border);border-radius:22px;padding:26px;box-shadow:0 18px 55px rgba(15,23,42,.14);position:relative;overflow:hidden}
+  #authGate:before{content:"";position:absolute;inset:0 0 auto;height:6px;background:linear-gradient(90deg,#1d4ed8,#0ea5e9,#14b8a6)}
+  .login-brand{display:flex;align-items:center;gap:13px;margin:2px 0 22px}
+  .login-mark{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(145deg,#1d4ed8,#0f766e);color:#fff;font-size:17px;font-weight:800;letter-spacing:-1px;box-shadow:0 7px 18px rgba(37,99,235,.25)}
+  .login-brand-title{font-size:17px;font-weight:800;letter-spacing:-.3px}
+  .login-brand-sub{font-size:11px;color:var(--muted);margin-top:3px}
+  #authGate h2{margin:0 0 6px;font-size:22px;letter-spacing:-.5px}
+  #authGate p{color:var(--muted);font-size:13px;line-height:1.55;margin:0 0 22px}
+  #authGate label{font-size:12px;font-weight:650;color:var(--text);margin:0 0 7px}
+  #authGate input{margin:0 0 16px;padding:13px 14px;font-size:15px;border-radius:11px;background:var(--bg);border-color:var(--border)}
+  #authGate input:focus{background:var(--card);outline:2px solid var(--accent);outline-offset:1px}
+  #authGate button{width:100%;margin-top:2px;padding:13px;border-radius:11px;font-size:14px;font-weight:700;letter-spacing:.2px;box-shadow:0 5px 14px rgba(37,99,235,.2)}
+  .login-foot{text-align:center;color:var(--muted);font-size:10px;margin-top:18px;letter-spacing:.2px}
+  @media(max-width:480px){#authGate{margin:5vh auto;padding:23px 20px;border-radius:18px}}
+  #authMessage{font-size:12px;color:var(--danger);min-height:18px;margin-top:8px}
+  #adminPanel{display:none;border:1px solid var(--border);border-radius:10px;padding:12px;margin:12px 0;background:var(--total)}
+  body.is-admin #adminPanel{display:block}
+  #sessionBar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;color:var(--muted)}
+  #adminPanel input{margin:5px 0 8px}
+</style>
+</head>
+<body>
+
+
+<div id="authGate" class="card">
+  <div class="login-brand">
+    <div class="login-mark">DA</div>
+    <div><div class="login-brand-title">D.A Calculator</div><div class="login-brand-sub">ARREARS & PAY MANAGEMENT</div></div>
+  </div>
+  <h2>Welcome back</h2>
+  <p>Sign in to securely access your D.A. arrears calculator.</p>
+  <form id="loginForm">
+    <label for="loginEmail">Username / Email</label>
+    <input id="loginEmail" type="email" autocomplete="username" placeholder="Enter your registered email" required>
+    <label for="loginPassword">Password</label>
+    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+    <button class="primary" type="submit">Sign in securely</button>
+  </form>
+  <div id="authMessage" role="status" aria-live="polite"></div>
+  <div class="login-foot">SECURE ACCESS · D.A CALCULATOR</div>
+</div>
+<datalist id="basicPayOptions"><option value="19000"></option><option value="19640"></option><option value="20280"></option><option value="20920"></option><option value="21580"></option><option value="22240"></option><option value="22900"></option><option value="23590"></option><option value="24280"></option><option value="24970"></option><option value="25690"></option><option value="26410"></option><option value="27130"></option><option value="27880"></option><option value="28630"></option><option value="29380"></option><option value="30210"></option><option value="31040"></option><option value="31870"></option><option value="32810"></option><option value="33750"></option><option value="34690"></option><option value="35720"></option><option value="36750"></option><option value="37780"></option><option value="38890"></option><option value="40000"></option><option value="41110"></option><option value="42300"></option><option value="43490"></option><option value="44680"></option><option value="45960"></option><option value="47240"></option><option value="48520"></option><option value="49920"></option><option value="51320"></option><option value="52720"></option><option value="54220"></option><option value="55720"></option><option value="57220"></option><option value="58850"></option><option value="60480"></option><option value="62110"></option><option value="63840"></option><option value="65570"></option><option value="67300"></option><option value="69150"></option><option value="71000"></option><option value="72850"></option><option value="74840"></option><option value="76830"></option><option value="78820"></option><option value="80960"></option><option value="83100"></option><option value="85240"></option><option value="87510"></option><option value="89780"></option><option value="92050"></option><option value="94470"></option><option value="96890"></option><option value="99310"></option><option value="101870"></option><option value="104430"></option><option value="106990"></option><option value="109750"></option><option value="112510"></option><option value="115270"></option><option value="118230"></option><option value="121190"></option><option value="124150"></option><option value="127310"></option><option value="130470"></option><option value="133630"></option><option value="137050"></option><option value="140470"></option><option value="143890"></option><option value="147310"></option><option value="151000"></option><option value="154690"></option><option value="158380"></option><option value="162070"></option></datalist>
+<div id="appContent">
+  <div id="sessionBar"><span id="signedInAs"></span><button class="ghost" id="logoutBtn" type="button">Logout</button></div>
+  <div id="adminPanel">
+    <strong>Admin: Common-user access control</strong>
+    <p class="hint">Disable access to sign out common users and prevent them from signing in again until you re-enable access.</p>
+    <button class="primary" id="toggleUserAccessBtn" type="button">Checking access status…</button>
+    <hr style="border:0;border-top:1px solid var(--border);margin:14px 0">
+    <strong>Reset common-user password</strong>
+    <p class="hint">Send a secure Firebase password-reset link to the common user's registered email. Access will be disabled and connected sessions revoked until you re-enable access after the password is changed.</p>
+    <label for="commonUserEmail">Common user's registered email</label>
+    <input id="commonUserEmail" type="email" autocomplete="off" placeholder="Enter common user's Firebase email">
+    <button class="ghost" id="sendPasswordResetBtn" type="button">Send password reset email</button>
+    <div id="passwordResetMessage" class="hint" role="status" aria-live="polite"></div>
+    <div id="adminMessage" class="hint" role="status" aria-live="polite"></div>
+  </div>
+
+<h1>D.A. Arrears Statement</h1>
+
+<div class="card">
+  <div class="summary-grid">
+    <div class="stat"><label>Net Amount</label><div class="stat-val" id="sumGross">0</div></div>
+    <div class="stat"><label>Cps Amount</label><div class="stat-val" id="sumCpsAmt">0</div></div>
+    <div class="stat"><label>Net Installment</label><div class="stat-val" id="sumNet">0</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="meta-grid">
+    <div><label>Employee Name</label><input id="empName"></div>
+    <div><label>Employee Id</label><input id="slNo"></div>
+  </div>
+  <div class="rates-grid">
+    <div><label>New DA Rate (%)</label><input id="newRate" type="number" step="0.01"></div>
+    <div><label>Old DA Rate (%)</label><input id="oldRate" type="number" step="0.01"></div>
+    <div><label>CPS Rate (%)</label><input id="cpsRate" type="number" step="0.01"></div>
+    <div><label>Installment</label><input id="divisor" type="number" step="1"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div id="periods"></div>
+  <button class="ghost" id="addPeriod">+ Add another period</button>
+  <div class="rmsg" id="rangeMsg"></div>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <colgroup><col><col><col><col><col><col><col><col><col><col></colgroup>
+      <thead>
+        <tr>
+          <th>Month</th><th>Basic</th><th>New DA</th><th>Old DA</th>
+          <th>Difference</th><th>CPS</th>
+          <th class="grp">Net Amount</th><th class="grp">Cps Amt</th><th class="grp">Net Installment</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+      <tfoot>
+        <tr>
+          <td>TOTAL</td><td></td><td></td><td></td>
+          <td id="tDiff">0</td><td id="tCps">0</td><td id="tGross">0</td><td></td><td id="tNet">0</td><td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="picker" id="picker">
+    <div class="field" id="monthField"><label>Month</label>
+      <select id="pickMonth"></select>
+    </div>
+    <div class="field"><label>Year</label>
+      <select id="pickYear"></select>
+    </div>
+    <button class="primary" id="confirmAdd">Add</button>
+    <button class="ghost" id="cancelAdd">Cancel</button>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="addMonth">+ Add month</button>
+    <button class="ghost" id="addSurrender">+ Add surrender</button>
+    <button class="ghost" id="exportBtn">⬇ Download as Excel</button>
+    <button class="ghost" id="resetBtn" style="color:var(--danger)">↺ Reset</button>
+  </div>
+</div>
+
+<script>
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const BASIC_PAY_STAGES = [19000, 19640, 20280, 20920, 21580, 22240, 22900, 23590, 24280, 24970, 25690, 26410, 27130, 27880, 28630, 29380, 30210, 31040, 31870, 32810, 33750, 34690, 35720, 36750, 37780, 38890, 40000, 41110, 42300, 43490, 44680, 45960, 47240, 48520, 49920, 51320, 52720, 54220, 55720, 57220, 58850, 60480, 62110, 63840, 65570, 67300, 69150, 71000, 72850, 74840, 76830, 78820, 80960, 83100, 85240, 87510, 89780, 92050, 94470, 96890, 99310, 101870, 104430, 106990, 109750, 112510, 115270, 118230, 121190, 124150, 127310, 130470, 133630, 137050, 140470, 143890, 147310, 151000, 154690, 158380, 162070];
+const DEFAULT_STATE = {
+  empName: "IZHAAN MOHIUDDIN, FF E.No. 4509990",
+  slNo: "10",
+  newRate: 37.31, oldRate: 33.67, cpsRate: 10, divisor: 33,
+  ranges: [{fm:0,fy:24,tm:8,ty:26,basic:""}],
+  genCount: 0,
+  rows: []
+};
+
+let state = null;
+let pickerMode = "month";
+let rowRefs = []; // {basicInput, cells:{newDA,oldDA,diff,cps,gross,cpsAmt,net}}
+const el = id => document.getElementById(id);
+
+function loadState(){
+  try{
+    const saved = localStorage.getItem('daArrearsState_v4');
+    if(saved) return JSON.parse(saved);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+function saveState(){
+  try{ localStorage.setItem('daArrearsState_v4', JSON.stringify(state)); }catch(e){}
+}
+
+function round(n){ n=n||0; return Math.sign(n)*Math.round(Math.abs(n)+1e-9); }
+
+function computeRow(basic){
+  const nr = (parseFloat(el('newRate').value)||0)/100;
+  const or_ = (parseFloat(el('oldRate').value)||0)/100;
+  const cr = (parseFloat(el('cpsRate').value)||0)/100;
+  const div = parseFloat(el('divisor').value)||33;
+  const newDA = round(basic*nr);
+  const oldDA = round(basic*or_);
+  const diff = newDA - oldDA;
+  const cps = round(diff*cr);
+  const gross = diff - cps;
+  const cpsAmt = round(diff/div);
+  const net = cpsAmt - round(cps/div);
+  return {newDA, oldDA, diff, cps, gross, cpsAmt, net};
+}
+
+function parseMonthYear(label){
+  const m = /^\s*([A-Za-z]+)\s*,\s*(\d+)\s*$/.exec(label||"");
+  if(!m) return null;
+  const idx = MONTHS.findIndex(x => x.toLowerCase() === m[1].toLowerCase());
+  if(idx === -1) return null;
+  return {idx, yy: parseInt(m[2],10)};
+}
+
+function findNovemberBasic(){
+  const r = state.rows.find(r => /november/i.test(r[0]||""));
+  return r ? r[1] : 0;
+}
+
+function populatePicker(){
+  const monthSel = el('pickMonth'), yearSel = el('pickYear');
+  monthSel.innerHTML = MONTHS.map((m,i) => `<option value="${i}">${m}</option>`).join('');
+  let years = [];
+  for(let y=20; y<=40; y++) years.push(y);
+  yearSel.innerHTML = years.map(y => `<option value="${y}">20${String(y).padStart(2,'0')}</option>`).join('');
+
+  const last = state.rows[state.rows.length-1];
+  const py = last ? parseMonthYear(last[0]) : null;
+  let defIdx = py ? py.idx+1 : new Date().getMonth();
+  let defYy = py ? py.yy : 26;
+  if(defIdx === 12){ defIdx = 0; defYy += 1; }
+  monthSel.value = String(defIdx);
+  yearSel.value = String(defYy);
+}
+
+function openPicker(mode){
+  pickerMode = mode;
+  populatePicker();
+  el('monthField').style.display = mode === 'month' ? '' : 'none';
+  el('picker').classList.add('open');
+}
+function closePicker(){ el('picker').classList.remove('open'); }
+
+// Recompute just the calculated cells of one row (does not touch inputs, so focus/cursor stays put)
+function recomputeRow(i){
+  const ref = rowRefs[i];
+  if(!ref) return;
+  const c = computeRow(state.rows[i][1]);
+  ref.cells.newDA.textContent = c.newDA;
+  ref.cells.oldDA.textContent = c.oldDA;
+  ref.cells.diff.textContent = c.diff;
+  ref.cells.cps.textContent = c.cps;
+  ref.cells.gross.textContent = c.gross;
+  ref.cells.cpsAmt.textContent = c.cpsAmt;
+  ref.cells.net.textContent = c.net;
+  return c;
+}
+
+function recomputeSums(){
+  let sums = {diff:0, cps:0, gross:0, cpsAmt:0, net:0};
+  state.rows.forEach(r => {
+    const c = computeRow(r[1]);
+    sums.diff += c.diff; sums.cps += c.cps; sums.gross += c.gross; sums.cpsAmt += c.cpsAmt; sums.net += c.net;
+  });
+  el('tDiff').textContent = sums.diff;
+  el('tCps').textContent = sums.cps;
+  el('tGross').textContent = sums.gross;
+  el('tNet').textContent = sums.net;
+  el('sumGross').textContent = sums.gross;
+  el('sumCpsAmt').textContent = sums.cpsAmt;
+  el('sumNet').textContent = sums.net;
+}
+
+function recomputeAllRows(){
+  state.rows.forEach((r,i) => recomputeRow(i));
+  recomputeSums();
+}
+
+// Full rebuild: only called on load, add row, delete row (structural changes)
+function buildRows(){
+  el('empName').value = state.empName;
+  el('slNo').value = state.slNo;
+  el('newRate').value = state.newRate;
+  el('oldRate').value = state.oldRate;
+  el('cpsRate').value = state.cpsRate;
+  el('divisor').value = state.divisor;
+
+  const tbody = el('rows');
+  tbody.innerHTML = "";
+  rowRefs = [];
+
+  state.rows.forEach((r, i) => {
+    const [month, basic] = r;
+    const c = computeRow(basic);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input data-i="${i}" data-f="month" value="${month}"></td>
+      <td><input data-i="${i}" data-f="basic" type="number" inputmode="decimal" list="basicPayOptions" placeholder="Type or select" value="${basic}"></td>
+      <td class="calc" data-c="newDA">${c.newDA}</td>
+      <td class="calc" data-c="oldDA">${c.oldDA}</td>
+      <td class="calc" data-c="diff">${c.diff}</td>
+      <td class="calc" data-c="cps">${c.cps}</td>
+      <td class="calc" data-c="gross">${c.gross}</td>
+      <td class="calc" data-c="cpsAmt">${c.cpsAmt}</td>
+      <td class="calc" data-c="net">${c.net}</td>
+      <td><button class="rowbtn" data-del="${i}" title="Remove row">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+
+    const cells = {};
+    tr.querySelectorAll('[data-c]').forEach(td => { cells[td.dataset.c] = td; });
+    rowRefs.push({ tr, cells });
+
+    tr.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', e => {
+        const idx = parseInt(e.target.dataset.i,10);
+        const f = e.target.dataset.f;
+        if(f === 'month'){
+          state.rows[idx][0] = e.target.value;
+        } else {
+          state.rows[idx][1] = parseFloat(e.target.value) || 0;
+          recomputeRow(idx);
+          recomputeSums();
+        }
+        saveState();
+      });
+    });
+    tr.querySelector('[data-del]').addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.del,10);
+      if(state.rows.length > 1){
+        state.rows.splice(idx,1); if(idx < (state.genCount||0)) state.genCount--;
+        saveState();
+        buildRows();
+        recomputeSums();
+      }
+    });
+  });
+
+  recomputeSums();
+}
+
+['newRate','oldRate','cpsRate','divisor'].forEach(id => {
+  el(id).addEventListener('input', () => {
+    state.newRate = parseFloat(el('newRate').value)||0;
+    state.oldRate = parseFloat(el('oldRate').value)||0;
+    state.cpsRate = parseFloat(el('cpsRate').value)||0;
+    state.divisor = parseFloat(el('divisor').value)||33;
+    saveState();
+    recomputeAllRows();
+  });
+});
+['empName','slNo'].forEach(id => {
+  el(id).addEventListener('input', () => {
+    state.empName = el('empName').value;
+    state.slNo = el('slNo').value;
+    saveState();
+  });
+});
+
+el('addMonth').addEventListener('click', () => openPicker('month'));
+el('addSurrender').addEventListener('click', () => openPicker('surrender'));
+el('cancelAdd').addEventListener('click', closePicker);
+
+el('confirmAdd').addEventListener('click', () => {
+  const yy = el('pickYear').value;
+  let label, basic;
+  if(pickerMode === 'month'){
+    const mi = parseInt(el('pickMonth').value,10);
+    label = MONTHS[mi] + "," + yy;
+    const last = state.rows[state.rows.length-1];
+    basic = last ? last[1] : 0;
+  } else {
+    label = "Surrender," + yy;
+    basic = round(findNovemberBasic()/2);
+  }
+  state.rows.push([label, basic]);
+  saveState();
+  closePicker();
+  buildRows();
+  const wrap = document.querySelector('.table-wrap');
+  wrap.scrollTop = wrap.scrollHeight;
+});
+
+let resetArmed = false, resetTimer = null;
+el('resetBtn').addEventListener('click', () => {
+  const btn = el('resetBtn');
+  if(!resetArmed){
+    resetArmed = true; btn.textContent = 'Tap again to confirm reset';
+    resetTimer = setTimeout(() => { resetArmed = false; btn.textContent = '↺ Reset'; }, 4000);
+    return;
+  }
+  clearTimeout(resetTimer); resetArmed = false; btn.textContent = '↺ Reset';
+  state.empName = ''; state.slNo = '';
+  state.ranges = []; state.rows = []; state.genCount = 0;
+  closePicker();
+  saveState(); buildRows(); renderPeriods();
+  el('rangeMsg').textContent = ''; el('rangeMsg').style.color = '';
+});
+
+const XLSX_MIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+function crc32(u){let t=crc32.t;if(!t){t=crc32.t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}}let c=-1;for(let i=0;i<u.length;i++)c=(c>>>8)^t[(c^u[i])&255];return(c^-1)>>>0;}
+function zipStore(files){
+  const enc=new TextEncoder(),parts=[],cen=[];let off=0;
+  files.forEach(f=>{
+    const n=enc.encode(f.name),d=enc.encode(f.text),crc=crc32(d),sz=d.length;
+    const l=new DataView(new ArrayBuffer(30));
+    l.setUint32(0,0x04034b50,true);l.setUint16(4,20,true);l.setUint16(12,0x21,true);
+    l.setUint32(14,crc,true);l.setUint32(18,sz,true);l.setUint32(22,sz,true);l.setUint16(26,n.length,true);
+    parts.push(new Uint8Array(l.buffer),n,d);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(14,0x21,true);
+    c.setUint32(16,crc,true);c.setUint32(20,sz,true);c.setUint32(24,sz,true);c.setUint16(28,n.length,true);c.setUint32(42,off,true);
+    cen.push(new Uint8Array(c.buffer),n);off+=30+n.length+sz;
+  });
+  let cs=0;cen.forEach(x=>cs+=x.length);
+  const e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cen,new Uint8Array(e.buffer)],{type:XLSX_MIME});
+}
+function buildXlsx(aoa,pctCells,tableStart){
+  const esc=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const col=i=>String.fromCharCode(65+i);
+  const last=aoa.length-1, ncols=8;
+  // auto column widths from content
+  const widths=[];
+  for(let ci=0;ci<ncols;ci++){
+    let w=ci===0?16:10;
+    for(let ri=tableStart;ri<aoa.length;ri++){
+      const v=aoa[ri][ci];
+      if(v===''||v==null) continue;
+      const t=(typeof v==='number'&&pctCells.has(col(ci)+(ri+1)))?(v*100).toFixed(2)+'%':String(v);
+      w=Math.max(w,t.length+4);
+    }
+    widths.push(w);
+  }
+  let rows='';
+  aoa.forEach((r,ri)=>{
+    let cells='';
+    const inTable=ri>=tableStart;
+    for(let ci=0;ci<ncols;ci++){
+      const v=r[ci], ref=col(ci)+(ri+1);
+      let st=0;
+      if(!inTable&&v!==''&&v!=null) st=5;                                  // name / id lines
+      if(inTable){
+        if(ri===tableStart||ri===tableStart+1) st=pctCells.has(ref)?3:2;   // header rows
+        else if(ri===last) st=4;                                           // totals row
+        else st=1;                                                         // data rows
+      }
+      const sa=st?' s="'+st+'"':'';
+      if(v===''||v==null){ if(inTable) cells+='<c r="'+ref+'"'+sa+'/>'; continue; }
+      if(typeof v==='number') cells+='<c r="'+ref+'"'+sa+'><v>'+v+'</v></c>';
+      else cells+='<c r="'+ref+'"'+sa+' t="inlineStr"><is><t>'+esc(v)+'</t></is></c>';
+    }
+    rows+='<row r="'+(ri+1)+'">'+cells+'</row>';
+  });
+  const colsXml='<cols>'+widths.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join('')+'</cols>';
+  const X='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  const al='<alignment horizontal="center" vertical="center" wrapText="1"/>';
+  const styles=X+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    +'<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
+    +'<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD9E1F2"/><bgColor indexed="64"/></patternFill></fill></fills>'
+    +'<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders>'
+    +'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+    +'<cellXfs count="6">'
+    +'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+    +'<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1">'+al+'</xf>'
+    +'<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">'+al+'</xf>'
+    +'<xf numFmtId="10" fontId="1" fillId="2" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">'+al+'</xf>'
+    +'<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">'+al+'</xf>'
+    +'<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>'
+    +'</cellXfs></styleSheet>';
+  return zipStore([
+    {name:'[Content_Types].xml',text:X+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+    {name:'_rels/.rels',text:X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+    {name:'xl/workbook.xml',text:X+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="DA Arrears" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+    {name:'xl/_rels/workbook.xml.rels',text:X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+    {name:'xl/styles.xml',text:styles},
+    {name:'xl/worksheets/sheet1.xml',text:X+'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+colsXml+'<sheetData>'+rows+'</sheetData></worksheet>'}
+  ]);
+}
+async function saveBlob(blob,name){
+  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if(mobile && navigator.canShare && navigator.share){
+    try{
+      const f=new File([blob],name,{type:blob.type});
+      if(navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:name}); return; }
+    }catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+el('exportBtn').addEventListener('click', () => {
+  try{
+    const aoa=[["Employee Name:",state.empName||""],["Employee Id:",String(state.slNo||"")],[]];
+    aoa.push(["Month","Basic","New DA","Old DA","Difference","CPS","Installment","Installment"]);
+    aoa.push(["","",(state.newRate||0)/100,(state.oldRate||0)/100,"",(state.cpsRate||0)/100,"Net Amount","Net Installment"]);
+    let sums={diff:0,cps:0,gross:0,net:0};
+    state.rows.forEach(r=>{
+      const c=computeRow(r[1]);
+      aoa.push([r[0],r[1],c.newDA,c.oldDA,c.diff,c.cps,c.gross,c.net]);
+      sums.diff+=c.diff; sums.cps+=c.cps; sums.gross+=c.gross; sums.net+=c.net;
+    });
+    aoa.push(["","","","",sums.diff,sums.cps,sums.gross,sums.net]);
+    saveBlob(buildXlsx(aoa,new Set(['C5','D5','F5']),3),'DA_Arrears_Statement.xlsx');
+  }catch(err){
+    alert("Couldn't export the file: "+(err&&err.message||err));
+  }
+});
+
+const MO = MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
+let YO=''; for(let y=20;y<=40;y++) YO+=`<option value="${y}">20${y}</option>`;
+
+function applyRanges(focusIdx){
+  const gen=[]; const msgs=[]; const seen=new Set(); let overlap=false;
+  state.ranges.forEach((r,i)=>{
+    const a=r.fy*12+r.fm, b=r.ty*12+r.tm;
+    const basic=parseFloat(r.basic)||0;
+    for(let k=a;k<=b;k++){ if(seen.has(k)) overlap=true; seen.add(k); }
+    for(let k=a;k<=b;k++) gen.push([MONTHS[k%12]+','+String(Math.floor(k/12)).padStart(2,'0'), basic]);
+  });
+  state.ranges.forEach((r,i)=>{ if(r.ty*12+r.tm < r.fy*12+r.fm) msgs.push('Period '+(i+1)+': "To" is before "From" - adjust the month/year'); });
+  if(overlap) msgs.push('Warning: some months appear in more than one period');
+  const extra=state.rows.slice(state.genCount||0);
+  state.rows=gen.concat(extra); state.genCount=gen.length;
+  el('rangeMsg').textContent = msgs.length ? msgs.join(' · ') : gen.length+' months in total';
+  el('rangeMsg').style.color = msgs.length ? 'var(--danger)' : '';
+  saveState(); buildRows();
+  // scroll the table so the first row of the period being edited is visible
+  if(typeof focusIdx==='number'){
+    let off=0;
+    for(let j=0;j<focusIdx;j++){ const q=state.ranges[j]; off+=Math.max(0,(q.ty*12+q.tm)-(q.fy*12+q.fm)+1); }
+    const wrap=document.querySelector('.table-wrap'), ref=rowRefs[off], th=wrap.querySelector('thead');
+    if(ref && wrap){ wrap.scrollTop=Math.max(0, ref.tr.offsetTop-(th?th.offsetHeight:0)); }
+  }
+}
+function renderPeriods(){
+  const box=el('periods'); box.innerHTML='';
+  state.ranges.forEach((r,i)=>{
+    const d=document.createElement('div'); d.className='period';
+    d.innerHTML=`<div class="phead"><span>Period ${i+1}</span>${state.ranges.length>1?'<button class="rowbtn" title="Remove period">✕</button>':''}</div>
+      <div class="range-grid">
+        <div><label>From Month</label><select data-k="fm">${MO}</select></div>
+        <div><label>From Year</label><select data-k="fy">${YO}</select></div>
+        <div><label>To Month</label><select data-k="tm">${MO}</select></div>
+        <div><label>To Year</label><select data-k="ty">${YO}</select></div>
+      </div>
+      <div style="margin-top:10px"><label>Basic Amount</label><input data-k="basic" type="number" inputmode="decimal" list="basicPayOptions" placeholder="Type or select pay scale amount"></div>`;
+    d.querySelectorAll('[data-k]').forEach(f=>{
+      f.value=r[f.dataset.k];
+      f.addEventListener(f.tagName==='SELECT'?'change':'input',()=>{
+        const k=f.dataset.k;
+        r[k]= k==='basic' ? f.value : parseInt(f.value,10);
+        applyRanges(i);
+      });
+    });
+    const x=d.querySelector('.rowbtn');
+    if(x) x.addEventListener('click',()=>{ state.ranges.splice(i,1); renderPeriods(); applyRanges(); });
+    box.appendChild(d);
+  });
+}
+el('addPeriod').addEventListener('click',()=>{
+  const last=state.ranges[state.ranges.length-1];
+  let k = last ? last.ty*12+last.tm+1 : (Math.min(40,Math.max(20,new Date().getFullYear()-2000))*12 + new Date().getMonth());
+  const m=k%12, y=Math.min(40,Math.floor(k/12));
+  state.ranges.push({fm:m,fy:y,tm:m,ty:y,basic:""});
+  renderPeriods(); applyRanges(state.ranges.length-1);
+  const p=el('periods').lastElementChild; p.scrollIntoView({block:'center'});
+  p.querySelector('input').focus();
+});
+
+state = loadState();
+if(typeof state.genCount!=='number' || state.genCount>(state.rows||[]).length){ state.genCount=(state.rows||[]).length; }
+if(!state.ranges){ state.ranges=JSON.parse(JSON.stringify(DEFAULT_STATE.ranges)); state.genCount=state.rows.length; }
+buildRows();
+renderPeriods();
+applyRanges();
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { getFirestore, doc, getDocFromServer, onSnapshot, runTransaction, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCY8p69_k4bSTEe8v6Q___0f9uL2SCoBVg",
+  authDomain: "da-calculator-b6fdd.firebaseapp.com",
+  projectId: "da-calculator-b6fdd",
+  storageBucket: "da-calculator-b6fdd.firebasestorage.app",
+  messagingSenderId: "295644502675",
+  appId: "1:295644502675:web:b90a0050b827fcec830b66"
+};
+
+// These IDs identify the only two accounts allowed to use this calculator.
+// They are identifiers, not passwords or secret keys.
+const ADMIN_UID = "yB5FZBEVHCeIfpIYxCNTd0gCYeI3";
+const COMMON_USER_UID = "dDjNh6pd0FastFHpQut5N8gyCRe2";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const gate = document.getElementById("authGate");
+const msg = document.getElementById("authMessage");
+const sessionRef = doc(db, "security", "session");
+let stopSessionWatch = null;
+let accessEnabled = true;
+
+function showLogin(message = "") {
+  document.body.classList.remove("authenticated", "is-admin");
+  gate.style.display = "block";
+  msg.textContent = message;
+  document.getElementById("loginPassword").value = "";
+}
+
+function updateAdminButton(enabled) {
+  accessEnabled = enabled;
+  const button = document.getElementById("toggleUserAccessBtn");
+  button.textContent = enabled ? "Disable common-user access" : "Enable common-user access";
+  document.getElementById("adminMessage").textContent = enabled
+    ? "Common-user access is currently ENABLED."
+    : "Common-user access is currently DISABLED.";
+}
+
+document.getElementById("loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  msg.textContent = "Signing in…";
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      document.getElementById("loginEmail").value.trim(),
+      document.getElementById("loginPassword").value
+    );
+  } catch (error) {
+    msg.textContent = error.message || "Login failed.";
+  }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+
+// Admin-only password reset: Firebase sends the secure reset link by email.
+// No password or privileged Admin credential is stored in this static app.
+document.getElementById("sendPasswordResetBtn").addEventListener("click", async () => {
+  const button = document.getElementById("sendPasswordResetBtn");
+  const status = document.getElementById("passwordResetMessage");
+  const email = document.getElementById("commonUserEmail").value.trim();
+
+  if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
+    status.textContent = "Only the configured Admin can request a password reset.";
+    return;
+  }
+  if (!email) {
+    status.textContent = "Enter the common user's registered Firebase email.";
+    return;
+  }
+  if (!confirm("Send a Firebase password-reset link to " + email + "? Common-user access will be disabled and all connected common-user sessions will be revoked until you re-enable access.")) return;
+
+  button.disabled = true;
+  status.textContent = "Preparing secure password reset…";
+  let resetEmailSent = false;
+  try {
+    // First close the access gate and revoke every connected common-user session.
+    await runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(sessionRef);
+      if (!snapshot.exists()) throw new Error("Access settings are not initialized.");
+      const current = snapshot.data();
+      transaction.update(sessionRef, {
+        accessEnabled: false,
+        version: (Number(current.version) || 0) + 1,
+        changedAt: serverTimestamp()
+      });
+    });
+    updateAdminButton(false);
+
+    await sendPasswordResetEmail(auth, email);
+    resetEmailSent = true;
+    status.textContent = "Password-reset email sent. Common-user access is now disabled and connected sessions have been revoked. After the user completes the email link, click Enable common-user access.";
+  } catch (error) {
+    status.textContent = resetEmailSent
+      ? "The reset email was sent, but an additional step failed: " + (error.message || "Unknown error")
+      : (error.code === "auth/user-not-found"
+          ? "No Firebase account was found for that email. Check the common user's registered email."
+          : (error.message || "Could not complete the password-reset request."));
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.getElementById("toggleUserAccessBtn").addEventListener("click", async () => {
+  const button = document.getElementById("toggleUserAccessBtn");
+  const status = document.getElementById("adminMessage");
+  const nextEnabled = !accessEnabled;
+  const prompt = nextEnabled
+    ? "Enable common-user access? Users can sign in again with their existing Firebase credentials."
+    : "Disable common-user access? All currently connected common users will be signed out, and new common-user logins will be blocked.";
+  if (!confirm(prompt)) return;
+
+  button.disabled = true;
+  status.textContent = "Updating access…";
+  try {
+    const committedEnabled = await runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(sessionRef);
+      if (!snapshot.exists()) {
+        throw new Error("Access settings are not initialized. Sign out and sign in as Admin again.");
+      }
+      const current = snapshot.data();
+      const enabled = current.accessEnabled !== true;
+      transaction.update(sessionRef, {
+        accessEnabled: enabled,
+        version: (Number(current.version) || 0) + 1,
+        changedAt: serverTimestamp()
+      });
+      return enabled;
+    });
+    updateAdminButton(committedEnabled);
+    status.textContent = committedEnabled
+      ? "Common-user access enabled. Users may sign in again."
+      : "Common-user access disabled. Connected common users are being signed out.";
+  } catch (error) {
+    status.textContent = error.message || "Could not update access settings.";
+  } finally {
+    button.disabled = false;
+  }
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (stopSessionWatch) {
+    stopSessionWatch();
+    stopSessionWatch = null;
+  }
+  if (!user) {
+    showLogin();
+    return;
+  }
+
+  const isAdmin = user.uid === ADMIN_UID;
+  const isCommonUser = user.uid === COMMON_USER_UID;
+  if (!isAdmin && !isCommonUser) {
+    await signOut(auth);
+    showLogin("This account is not authorized for the D.A Calculator.");
+    return;
+  }
+
+  try {
+    // The Admin initializes the shared access-control document on first use.
+    if (isAdmin) {
+      const initial = await getDocFromServer(sessionRef);
+      if (!initial.exists()) {
+        await setDoc(sessionRef, {
+          version: 0,
+          accessEnabled: true,
+          changedAt: serverTimestamp()
+        });
+      }
+    }
+
+    // Always verify access against the server, not only a possibly stale cache.
+    const currentSnapshot = await getDocFromServer(sessionRef);
+    if (!currentSnapshot.exists()) {
+      await signOut(auth);
+      showLogin("Admin has not initialized access control yet. Please contact the Admin.");
+      return;
+    }
+
+    const currentData = currentSnapshot.data();
+    if (!isAdmin && currentData.accessEnabled !== true) {
+      await signOut(auth);
+      showLogin("The Admin has disabled access. Please contact the Admin.");
+      return;
+    }
+
+    document.body.classList.add("authenticated");
+    document.body.classList.toggle("is-admin", isAdmin);
+    gate.style.display = "none";
+    document.getElementById("signedInAs").textContent =
+      (isAdmin ? "Admin signed in: " : "User signed in: ") + (user.email || "account");
+
+    if (isAdmin) updateAdminButton(currentData.accessEnabled === true);
+
+    let observedVersion = Number(currentData.version) || 0;
+    stopSessionWatch = onSnapshot(sessionRef, async (snapshot) => {
+      if (!snapshot.exists()) {
+        if (!isAdmin) {
+          await signOut(auth);
+          showLogin("Access settings are unavailable. Please contact the Admin.");
+        }
+        return;
+      }
+      const data = snapshot.data();
+      const latestVersion = Number(data.version) || 0;
+      if (!isAdmin && (data.accessEnabled !== true || latestVersion !== observedVersion)) {
+        if (stopSessionWatch) {
+          stopSessionWatch();
+          stopSessionWatch = null;
+        }
+        await signOut(auth);
+        showLogin(data.accessEnabled === true
+          ? "Your session was revoked by the Admin. Please sign in again."
+          : "The Admin has disabled access. Please contact the Admin.");
+        return;
+      }
+      observedVersion = latestVersion;
+      if (isAdmin) updateAdminButton(data.accessEnabled === true);
+    }, async (error) => {
+      console.error("Access monitor:", error);
+      if (!isAdmin) {
+        await signOut(auth);
+        showLogin("Could not verify your access. Please sign in again later.");
+      }
+    });
+  } catch (error) {
+    console.error("Authentication/access check:", error);
+    await signOut(auth);
+    showLogin("Could not verify access. Check your internet connection or contact the Admin.");
+  }
+});
+</script>
+</div>
+</body>
+</html>
